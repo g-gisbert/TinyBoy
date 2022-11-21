@@ -15,6 +15,7 @@ public:
     ~Cartridge() { delete romData; }
     void loadRom(std::string filename);
     void printInfo();
+    uint8_t getOpcode(uint16_t pc);
 
 private:
     std::string getCartridgeType(uint8_t x);

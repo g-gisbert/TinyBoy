@@ -191,3 +191,7 @@ std::string Cartridge::getRamSize(uint8_t x) {
     }
     return rs;
 }
+
+uint8_t Cartridge::getOpcode(uint16_t pc) {
+    return romData[pc];
+}
