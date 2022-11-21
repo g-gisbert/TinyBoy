@@ -18,6 +18,7 @@ private:
     CPU cpu;
     Cartridge cart;
 
+    bool running;
 };
 
 
