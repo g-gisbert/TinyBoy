@@ -9,12 +9,12 @@ void GameBoy::setupSequence() {
 }
 
 void GameBoy::loadCartridge(std::string filename) {
-    cart.loadRom(filename);
-    cart.printInfo();
+    cpu.cart.loadRom(filename);
+    cpu.cart.printInfo();
 }
 
 void GameBoy::run() {
     while(running) {
-        cpu.step(cart.getOpcode(cpu.regs.pc));
+        cpu.step();
     }
 }
