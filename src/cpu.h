@@ -3,15 +3,17 @@
 
 #include "registers.h"
 #include "instructions.h"
+#include "cartridge.h"
 #include <cstdio>
 #include <iostream>
 
 class CPU {
 public:
     CPU();
-    void step(uint8_t opcode);
+    void step();
 
     Registers regs;
+    Cartridge cart;
 };
 
 

@@ -13,9 +13,12 @@ struct instructions {
 
 void nop();
 
+void ld(uint8_t& dest, uint8_t src);
+void ld(uint16_t& dest, uint16_t src);
+
 constexpr instructions instructions_set[256] = {
         {"NOP", 1, nop},
-        {"???", 0, nullptr},
+        {"LD BC, 0x%02X", 3, nullptr},
         {"???", 0, nullptr},
         {"???", 0, nullptr},
         {"???", 0, nullptr},
