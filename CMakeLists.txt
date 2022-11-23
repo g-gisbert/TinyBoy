@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_subdirectory(SFML)
 
-add_executable(emulator src/main.cpp src/gameBoy.cpp src/cpu.cpp src/cartridge.cpp src/registers.cpp src/instructions.h src/instructions.cpp)
+add_executable(emulator src/main.cpp src/gameBoy.cpp src/cpu.cpp src/cartridge.cpp src/registers.cpp)
 
 target_link_libraries(emulator sfml-window sfml-graphics sfml-main)
 
