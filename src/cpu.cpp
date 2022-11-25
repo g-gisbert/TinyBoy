@@ -1,7 +1,15 @@
 #include "cpu.h"
 
 CPU::CPU() {
+    initMemory();
+}
+
+void CPU::initMemory() {
+    // Registers
+    regs.a = 0x01;
+    regs.f = 0x80;
     regs.pc = 0x100;
+
 }
 
 void CPU::step() {
@@ -24,7 +32,7 @@ void CPU::step() {
             std::printf("INSTRUCTION : ");
             std::printf(instruction.name, operand);
             std::printf(" (0x%02X)\n", opcode);
-            (*this.*instruction.funcCall16)(operand);
+            (*this.*instruction.funcCall8)(operand);
             break;
         }
         case 3: {
@@ -41,8 +49,9 @@ void CPU::step() {
     }
 
 
-    int a;
-    std::cin >> a;
+    int a = 3;
+    a += 5;
+    //std::cin >> a;
 }
 
 // Fetch Memory
@@ -56,23 +65,29 @@ uint16_t CPU::read16(uint16_t address) {
 
 uint8_t CPU::read8(uint16_t address) {
     if(address < 0x8000) {
-        return  cart.readCart(address);
+        return cart.readCart(address);
     }
 }
 
 
 // CPU Instructions
-void CPU::nop() {
-    std::printf("test");
+void CPU::nop() { // 0x00
 }
 
-void CPU::ld_bc_nn(uint16_t nn) {
-    regs.bc = nn;
-}
+void CPU::ld_bc_nn(uint16_t nn) { // 0x01
+    regs.bc = nn; }
 
-void CPU::jp_nn(uint16_t nn) {
-    regs.pc = nn;
-}
+void CPU::ld_c_n(uint8_t n) { // 0x0E
+    regs.c = n; }
+
+void CPU::ld_hl_nn(uint16_t nn) { // 0x21
+    regs.hl = nn; }
+
+void CPU::jp_nn(uint16_t nn) { // 0xC3
+    regs.pc = nn; }
+
+void CPU::xor_a() { // 0xAF
+    regs.a ^= regs.a; }
 
 
 

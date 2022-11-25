@@ -5,7 +5,7 @@ GameBoy::GameBoy() : running(true) {
 }
 
 void GameBoy::setupSequence() {
-    loadCartridge(std::string{"../roms/zelda.gb"});
+    loadCartridge(std::string{"../roms/tetris.gb"});
 }
 
 void GameBoy::loadCartridge(std::string filename) {

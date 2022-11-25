@@ -13,7 +13,7 @@ class Cartridge {
 public:
     Cartridge() = default;
     ~Cartridge() { delete romData; }
-    void loadRom(std::string filename);
+    void loadRom(std::string& filename);
     void printInfo();
     uint8_t readCart(uint16_t pc);
 

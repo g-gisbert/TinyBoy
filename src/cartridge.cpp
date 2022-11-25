@@ -1,6 +1,6 @@
 #include "cartridge.h"
 
-void Cartridge::loadRom(std::string filename) {
+void Cartridge::loadRom(std::string& filename) {
     // Open file
     std::ifstream rom(filename, std::ios::binary);
     if(!rom.is_open()) {
