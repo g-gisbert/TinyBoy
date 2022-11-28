@@ -3,6 +3,13 @@
 
 #include <memory>
 
+enum {
+    ZERO_FLAG = 1,
+    SUB_FLAG = 2,
+    HALF_CARRY_FLAG = 4,
+    CARRY_FLAG = 8
+};
+
 struct Registers {
     union {
         struct {
@@ -36,11 +43,10 @@ struct Registers {
     uint16_t sp;
     uint16_t pc;
 
+    void setFlag(int flag, bool value);
+    bool checkFlagSet(int flag) const;
+    bool checkFlagClear(int flag) const;
+
 };
-
-template<typename T>
-void setBit(T& reg, int bit, int val) {
-
-}
 
 #endif //EMULATOR_REGISTERS_H
