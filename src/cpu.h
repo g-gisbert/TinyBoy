@@ -5,6 +5,7 @@
 #include "cartridge.h"
 #include <cstdio>
 #include <iostream>
+#include <cstring>
 
 class CPU {
 public:
@@ -14,12 +15,18 @@ public:
     //fetch, read, write
     uint8_t read8(uint16_t address);
     uint16_t read16(uint16_t address);
-    void write8(uint16_t address);
-    void write16(uint16_t address);
+    void write8(uint16_t address, uint8_t value);
+    void write16(uint16_t address, uint16_t value);
 
     // Memory
     Registers regs;
-    Cartridge cart;
+    uint8_t stack[0xFFFF];
+    Cartridge cart; // 0x0000 - 0x7FFF
+    uint8_t WRAM[0x2000]; // 0xC000 - 0xDFFF
+    uint8_t OAM[0xA0]; // 0xFE00 - 0xFE9F
+    uint8_t IORegisters[0x80]; // 0xFF00 - 0xFF7F
+    uint8_t HRAM[0x7F]; // 0xFF80 - 0xFFFE
+    uint8_t IME; // 0xFFFF
 
     // Instructions
     struct Instruction {
@@ -34,12 +41,27 @@ public:
 
     };
 
-    void nop(); // 0 (0x00)
-    void ld_bc_nn(uint16_t nn); // 1 (0x01)
-    void ld_c_n(uint8_t n);
+    // Helpers
+    void dec(uint8_t& r);
+    void _xor(uint8_t r);
+    void cp(uint8_t val);
+
+    void nop(); // 0x00
+    void ld_bc_nn(uint16_t nn); // 0x01
+    void dec_b(); // 0x05
+    void ld_b_n(uint8_t n); // 0x06
+    void dec_c(); // 0x0D
+    void ld_c_n(uint8_t n); // 0x0E
+    void jr_nz_n(uint8_t n); // 0x20
     void ld_hl_nn(uint16_t nn); // 0x21
-    void jp_nn(uint16_t nn); // 195 (0xC3)
+    void ld_hlpm_a(); // 0x32
+    void ld_a_n(uint8_t n); // 0x3E
     void xor_a(); // 0xAF
+    void jp_nn(uint16_t nn); // 0xC3
+    void ldh_n_a(uint8_t n); // 0xE0
+    void ldh_a_n(uint8_t n); // 0xF0
+    void di(); // 0xF3
+    void cp_n(uint8_t n); // 0xFE
 
 
     constexpr static Instruction instructions_set[256] = {
@@ -48,15 +70,15 @@ public:
             {"???", 0,           nullptr},// 0x02
             {"???", 0,           nullptr},// 0x03
             {"???", 0,           nullptr},// 0x04
-            {"???", 0,           nullptr},// 0x05
-            {"???", 0,           nullptr},// 0x06
+            {.name="DEC B", .byteLength=1, .funcCallVoid=&CPU::dec_b},// 0x05
+            {.name="LD B, 0x%02X", .byteLength=2, .funcCall8=&CPU::ld_b_n},// 0x06
             {"???", 0,           nullptr},// 0x07
             {"???", 0,           nullptr},// 0x08
             {"???", 0,           nullptr},// 0x09
             {"???", 0,           nullptr},// 0x0A
             {"???", 0,           nullptr},// 0x0B
             {"???", 0,           nullptr},// 0x0C
-            {"???", 0, nullptr},// 0x0D
+            {.name="DEC C", .byteLength=1, .funcCallVoid=&CPU::dec_c},// 0x0D
             {.name="LD C, 0x%02X", .byteLength=2, .funcCall8=&CPU::ld_c_n},// 0x0E
             {"???", 0, nullptr},// 0x0F
             {"???", 0, nullptr},// 0x10
@@ -75,7 +97,7 @@ public:
             {"???", 0, nullptr},// 0x1D
             {"???", 0, nullptr},// 0x1E
             {"???", 0, nullptr},// 0x1F
-            {"???", 0, nullptr},// 0x20
+            {.name="JR NZ, 0x%02X", .byteLength=2, .funcCall8=&CPU::jr_nz_n},// 0x20
             {.name="LD HL, 0x%04X", .byteLength=3, .funcCall16=&CPU::ld_hl_nn},// 0x21
             {"???", 0, nullptr},// 0x22
             {"???", 0, nullptr},// 0x23
@@ -93,7 +115,7 @@ public:
             {"???", 0, nullptr},// 0x2F
             {"???", 0, nullptr},// 0x30
             {"???", 0, nullptr},// 0x31
-            {"???", 0, nullptr},// 0x32
+            {.name="LD (HL-), A", .byteLength=1, .funcCallVoid=&CPU::ld_hlpm_a},// 0x32
             {"???", 0, nullptr},// 0x33
             {"???", 0, nullptr},// 0x34
             {"???", 0, nullptr},// 0x35
@@ -105,7 +127,7 @@ public:
             {"???", 0, nullptr},// 0x3B
             {"???", 0, nullptr},// 0x3C
             {"???", 0, nullptr},// 0x3D
-            {"???", 0, nullptr},// 0x3E
+            {.name="LD A, 0x02X", .byteLength=2, .funcCall8=&CPU::ld_a_n},// 0x3E
             {"???", 0, nullptr},// 0x3F
             {"???", 0, nullptr},// 0x40
             {"???", 0, nullptr},// 0x41
@@ -267,7 +289,7 @@ public:
             {"???", 0, nullptr},// 0xDD
             {"???", 0, nullptr},// 0xDE
             {"???", 0, nullptr},// 0xDF
-            {"???", 0, nullptr},// 0xE0
+            {.name="LDH 0xFF%02X, A", .byteLength=2, .funcCall8=&CPU::ldh_n_a},// 0xE0
             {"???", 0, nullptr},// 0xE1
             {"???", 0, nullptr},// 0xE2
             {"???", 0, nullptr},// 0xE3
@@ -283,10 +305,10 @@ public:
             {"???", 0, nullptr},// 0xED
             {"???", 0, nullptr},// 0xEE
             {"???", 0, nullptr},// 0xEF
-            {"???", 0, nullptr},// 0xF0
+            {.name="LDH A, 0xFF%02X", .byteLength=2, .funcCall8=&CPU::ldh_a_n},// 0xF0
             {"???", 0, nullptr},// 0xF1
             {"???", 0, nullptr},// 0xF2
-            {"???", 0, nullptr},// 0xF3
+            {.name="DI", .byteLength=1, .funcCallVoid=&CPU::di},// 0xF3
             {"???", 0, nullptr},// 0xF4
             {"???", 0, nullptr},// 0xF5
             {"???", 0, nullptr},// 0xF6
@@ -297,9 +319,10 @@ public:
             {"???", 0, nullptr},// 0xFB
             {"???", 0, nullptr},// 0xFC
             {"???", 0, nullptr},// 0xFD
-            {"???", 0, nullptr},// 0xFE
+            {.name="CP n", .byteLength=2, .funcCall8=&CPU::cp_n},// 0xFE
             {"???", 0, nullptr},// 0xFF
     };
+
 };
 
 
