@@ -49,4 +49,4 @@ struct Registers {
 
 };
 
-#endif //EMULATOR_REGISTERS_H
+#endif // EMULATOR_REGISTERS_H

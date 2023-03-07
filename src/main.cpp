@@ -7,7 +7,6 @@ int main()
     GameBoy emulation;
     emulation.run();
 
-
     return 0;
 }
 
