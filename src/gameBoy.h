@@ -2,6 +2,7 @@
 #define EMULATOR_GAMEBOY_H
 
 #include "cpu.h"
+#include "ppu.h"
 #include <string>
 
 
@@ -14,7 +15,10 @@ private:
     void setupSequence();
     void loadCartridge(std::string filename);
 
-public: CPU cpu;
+public:
+    Memory memory;
+    CPU cpu;
+    PPU ppu;
 
     bool running;
 };
