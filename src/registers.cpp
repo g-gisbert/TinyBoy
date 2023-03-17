@@ -20,10 +20,7 @@ void Registers::setFlag(int flag, bool value) {
 }
 
 bool Registers::checkFlagSet(int flag) const {
-    if (flag & f) {
-        return true;
-    }
-    return false;
+    return !checkFlagClear(flag);
 }
 bool Registers::checkFlagClear(int flag) const {
     if (flag == ZERO_FLAG) {

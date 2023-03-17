@@ -1,6 +1,6 @@
 #include "gameBoy.h"
 
-GameBoy::GameBoy() : running(true), cpu(memory), ppu(memory) {
+GameBoy::GameBoy() : running(true), renderer(memory), cpu(memory), ppu(memory, renderer) {
     setupSequence();
 }
 
@@ -15,7 +15,10 @@ void GameBoy::loadCartridge(std::string filename) {
 
 void GameBoy::run() {
     while(running) {
+        renderer.step(running);
+        interruptStep(cpu);
         int& cycles = cpu.step();
         ppu.step(cycles);
     }
+    std::cout << "End" << std::endl;
 }

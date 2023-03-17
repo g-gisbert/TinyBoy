@@ -1,6 +1,6 @@
 #include <iostream>
 #include "gameBoy.h"
-#include "registers.h"
+
 
 int main()
 {
