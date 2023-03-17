@@ -3,20 +3,23 @@
 
 #include "cpu.h"
 #include "memory.h"
+#include "display.h"
 
-enum {
-    H_BLANK,
-    V_BLANK,
-    OAM_SEARCH,
-    PIXEL_TRANSFER
+enum : uint8_t {
+    H_BLANK = 0b00,
+    V_BLANK = 0b01,
+    OAM_SEARCH = 0b10,
+    PIXEL_TRANSFER = 0b11
 };
 
 class PPU {
 public:
-    PPU(Memory& memo) :  memory(memo) {}
+    PPU(Memory& memo, Display& dis) : memory(memo), display(dis) {}
     void step(int& cycles);
+    void statHandle(int mb);
 
     Memory& memory;
+    Display& display;
 
     int mode;
 };

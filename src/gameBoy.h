@@ -3,6 +3,8 @@
 
 #include "cpu.h"
 #include "ppu.h"
+#include "interrupts.h"
+#include "display.h"
 #include <string>
 
 
@@ -17,6 +19,7 @@ private:
 
 public:
     Memory memory;
+    Display renderer;
     CPU cpu;
     PPU ppu;
 
