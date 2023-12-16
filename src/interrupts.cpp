@@ -13,6 +13,11 @@ void interruptStep(CPU& cpu) {
         handleInterrupt(cpu, 0x40);
     }
 
+    if ((IE & 0x10) && (IF & 0x10)) { // Joy pad interrupt
+        IF = IF & ~(0x10);
+        handleInterrupt(cpu, 0x60);
+    }
+
 }
 
 void handleInterrupt(CPU& cpu, uint16_t address) {

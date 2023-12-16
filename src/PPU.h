@@ -18,6 +18,8 @@ public:
     void step(int& cycles);
     void statHandle(int mb);
 
+    void renderDebug();
+
     Memory& memory;
     Display& display;
 

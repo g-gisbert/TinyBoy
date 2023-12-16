@@ -24,6 +24,7 @@ public:
     PPU ppu;
 
     bool running;
+    bool pausing;
 };
 
 
