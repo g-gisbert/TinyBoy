@@ -1,7 +1,8 @@
 #include "gameBoy.h"
 #include <fstream>
 
-GameBoy::GameBoy() : renderer(memory), cpu(memory), ppu(memory, renderer), running(true), pausing(false) {
+GameBoy::GameBoy() : renderer(memory), cpu(memory), ppu(memory, renderer), timer(memory),
+                     joypad(memory, renderer.window), running(true), pausing(false) {
     setupSequence();
 }
 

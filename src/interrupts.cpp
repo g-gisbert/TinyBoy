@@ -8,13 +8,13 @@ void interruptStep(CPU& cpu) {
     uint8_t& IE = cpu.memory.IE();
     uint8_t& IF = cpu.memory.IF();
 
-    if ((IE & 0x1) && (IF & 0x1)) { // VBlank interrupt
-        IF = IF & ~(0x1);
+    if ((IE & VBLANK) && (IF & VBLANK)) { // VBlank interrupt
+        IF = IF & ~VBLANK;
         handleInterrupt(cpu, 0x40);
     }
 
-    if ((IE & 0x10) && (IF & 0x10)) { // Joy pad interrupt
-        IF = IF & ~(0x10);
+    if ((IE & JOYPAD) && (IF & JOYPAD)) { // Joy pad interrupt
+        IF = IF & ~JOYPAD;
         handleInterrupt(cpu, 0x60);
     }
 

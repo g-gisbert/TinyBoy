@@ -44,8 +44,8 @@ void Display::callback(bool& pausing, Memory& memory) {
                 std::cout << std::endl;
             }
 
-            uint8_t val = memory.read8(0xFF00);
-            val |= 0x01;
+            uint8_t val = memory.JOYP();
+            val |= 0b00010111;
             memory.write8(0xFF00, val);
             memory.IF() |= 0x10;
         }
