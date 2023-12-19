@@ -5,6 +5,8 @@
 #include "ppu.h"
 #include "interrupts.h"
 #include "display.h"
+#include "timer.h"
+#include "joypad.h"
 #include <string>
 
 
@@ -22,6 +24,8 @@ public:
     Display renderer;
     CPU cpu;
     PPU ppu;
+    Timer timer;
+    Joypad joypad;
 
     bool running;
     bool pausing;
