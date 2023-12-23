@@ -4,6 +4,7 @@
 
 CPU::CPU(Memory& memo) : memory(memo) {
     initMemory();
+    nInstr = 0;
     debug = false;
 }
 
@@ -22,7 +23,9 @@ void CPU::initMemory() {
 
 int& CPU::step() {
 
-   /* if (nInstr % 1000 == 0) {
+    cycles = 0;
+
+   /*if (nInstr % 1000 == 0) {
         std::cout << std::dec << nInstr << std::hex << std::endl;
         std::string visu = debugFile.str();
         std::transform(visu.begin(), visu.end(), visu.begin(), ::toupper);
@@ -90,7 +93,7 @@ int& CPU::step() {
     //memory.IORegisters[0x44] = 0x90;  // to delete
 
     nInstr++;
-    if (nInstr == 0-3)
+    if (nInstr == -5)
         debug = true;
 
     if (regs.pc == 0x9999)
@@ -107,7 +110,7 @@ int& CPU::step() {
     }
 
     cycles += instruction.cycles;
-    //std::cout << "PC : " << std::hex << regs.pc << std::endl;
+
     return cycles;
 }
 
@@ -123,18 +126,23 @@ void CPU::showState() const {
 
 // Helpers
 void CPU::pushToStack(uint16_t nn) {
-    uint8_t msb = (nn & 0xFF00) >> 8;
+    /*uint8_t msb = (nn & 0xFF00) >> 8;
     uint8_t lsb = uint8_t(nn & 0x00FF);
     stack[regs.sp-1] = msb;
     stack[regs.sp-2] = lsb;
+    regs.sp -= 2;*/
     regs.sp -= 2;
+    memory.write16(regs.sp, nn);
 }
 
 uint16_t CPU::popFromStack() {
-    uint8_t lsb = stack[regs.sp];
+    /*uint8_t lsb = stack[regs.sp];
     uint8_t msb = stack[regs.sp+1];
     regs.sp += 2;
-    return (uint16_t(msb) << 8) + lsb;
+    return (uint16_t(msb) << 8) + lsb;*/
+    uint16_t value = memory.read16(regs.sp);
+    regs.sp += 2;
+    return value;
 }
 
 void CPU::add8(uint8_t r) {
@@ -375,7 +383,7 @@ void CPU::ld_hl_nn(uint16_t nn) { // 0x21
     regs.hl = nn; }
 
 void CPU::ldi_hlp_a() { // 0x22
-    memory.write8(regs.hl++, regs.a); }
+        memory.write8(regs.hl++, regs.a); }
 
 void CPU::inc_hl() { // 0x23
     regs.hl++; }
@@ -684,7 +692,8 @@ void CPU::ld_hlp_h() { // 0x74
 void CPU::ld_hlp_l() { // 0x75
     memory.write8(regs.hl, regs.l); }
 
-// 0x76
+void CPU::halt() {// 0x76
+    return; }
 
 void CPU::ld_hlp_a() { // 0x77
     memory.write8(regs.hl, regs.a ); }
@@ -1038,6 +1047,13 @@ void CPU::reti() { // 0xD9
     memory.IME = true;
     regs.pc = popFromStack(); }
 
+void CPU::jp_c_nn(uint16_t nn) { // 0xDA
+    if (regs.checkFlagSet(CARRY_FLAG)) {
+        regs.pc = nn;
+        cycles += 16;
+    } else
+        cycles += 12; }
+
 void CPU::call_c_nn(uint16_t nn) { // 0xDC
     if (regs.checkFlagSet(CARRY_FLAG)) {
         pushToStack(regs.pc);
@@ -1176,6 +1192,7 @@ uint8_t CPU::rlc(uint8_t& r) {
     r = r << 1;
     r += uint8_t(carry);
     regs.setFlag(ZERO_FLAG, r == 0);
+    return r;
 }
 
 uint8_t CPU::rrc(uint8_t& r) {
@@ -1186,6 +1203,7 @@ uint8_t CPU::rrc(uint8_t& r) {
     r = r >> 1;
     r |= (carry << 7);
     regs.setFlag(ZERO_FLAG, !r);
+    return r;
 }
 uint8_t CPU::rl(uint8_t& r) {
     int carry = (regs.checkFlagSet(CARRY_FLAG)) ? 1 : 0;
@@ -1195,6 +1213,7 @@ uint8_t CPU::rl(uint8_t& r) {
     r = r << 1;
     r += uint8_t(carry);
     regs.setFlag(ZERO_FLAG, !r);
+    return r;
 }
 
 uint8_t CPU::rr(uint8_t& r) {
@@ -1208,13 +1227,14 @@ uint8_t CPU::rr(uint8_t& r) {
     return r;
 }
 
-void CPU::sla(uint8_t& r) {
+uint8_t CPU::sla(uint8_t& r) {
     regs.setFlag(ZERO_FLAG | SUB_FLAG | HALF_CARRY_FLAG | CARRY_FLAG, 0);
     if (r >= 0x80)
         regs.setFlag(CARRY_FLAG, 1);
     r = r << 1;
     if (r == 0)
         regs.setFlag(ZERO_FLAG, 1);
+    return r;
 }
 
 uint8_t CPU::sra(uint8_t& r) {
@@ -1229,22 +1249,24 @@ uint8_t CPU::sra(uint8_t& r) {
     return r;
 }
 
-void CPU::swap(uint8_t& r) {
+uint8_t CPU::swap(uint8_t& r) {
     uint8_t msb = (r & 0xF0) >> 4;
     uint8_t lsb = r & 0x0F;
     r = (lsb << 4) + msb;
     regs.setFlag(ZERO_FLAG | SUB_FLAG | HALF_CARRY_FLAG | CARRY_FLAG, 0);
     if (r == 0)
         regs.setFlag(ZERO_FLAG, 1);
+    return r;
 }
 
-void CPU::srl(uint8_t& r) {
+uint8_t CPU::srl(uint8_t& r) {
     regs.setFlag(ZERO_FLAG | SUB_FLAG | HALF_CARRY_FLAG | CARRY_FLAG, 0);
     if (r & 0x01)
         regs.setFlag(CARRY_FLAG, 1);
     r = r >> 1;
     if (r == 0)
         regs.setFlag(ZERO_FLAG, 1);
+    return r;
 }
 
 void CPU::bit(uint8_t r, int b) {
@@ -1258,8 +1280,9 @@ void CPU::res8(uint8_t& r, int b) {
     r &= ~(1 << b);
 }
 
-void CPU::set(uint8_t& r, int b) {
+uint8_t CPU::set(uint8_t& r, int b) {
     r |= 1 << b;
+    return r;
 }
 
 void CPU::rlc_b() { // 0x00
@@ -1382,8 +1405,7 @@ void CPU::sla_l() { // 0x25
 
 void CPU::sla_hlp() { // 0x26
     uint8_t r = memory.read8(regs.hl);
-    sla(r);
-    r = r << 1; }
+    memory.write8(regs.hl, sla(r)) ;}
 
 void CPU::sla_a() { // 0x27
     sla(regs.a); }
@@ -1433,10 +1455,7 @@ void CPU::swap_l() { // 0x35
 
 void CPU::swap_hlp() { // 0x36
     uint8_t r = memory.read8(regs.hl);
-    swap(r);
-    uint8_t msb = (r & 0xFF00) >> 8;
-    uint8_t lsb = r & 0xFF;
-    memory.write8(regs.hl, (uint16_t(lsb) << 8) + msb); }
+    memory.write8(regs.hl, swap(r)); }
 
 void CPU::swap_a() { // 0x37
     swap(regs.a); }
@@ -1461,8 +1480,7 @@ void CPU::srl_l() { // 0x3D
 
 void CPU::srl_hlp() { // 0x3E
     uint8_t r = memory.read8(regs.hl);
-    sla(r);
-    r = r >> 1; }
+    memory.write8(regs.hl, srl(r)); }
 
 void CPU::srl_a() { // 0x3F
     srl(regs.a); }
@@ -1894,7 +1912,8 @@ void CPU::set_1_l() { // 0xCD
     set(regs.l, 1); }
 
 void CPU::set_1_hlp() { // 0xCE
-    memory.write8(regs.hl, memory.read8(regs.hl) & ~(1 << 1)); }
+    uint8_t r = memory.read8(regs.hl);
+    memory.write8(regs.hl, set(r, 1)); }
 
 void CPU::set_1_a() { // 0xCF
     set(regs.a, 1); }
@@ -1918,7 +1937,8 @@ void CPU::set_2_l() { // 0xD5
     set(regs.l, 2); }
 
 void CPU::set_2_hlp() { // 0xD6
-    memory.write8(regs.hl, memory.read8(regs.hl) & ~(1 << 2)); }
+    uint8_t r = memory.read8(regs.hl);
+    memory.write8(regs.hl, set(r, 2)); }
 
 void CPU::set_2_a() { // 0xD7
     set(regs.a, 2); }
@@ -1942,7 +1962,8 @@ void CPU::set_3_l() { // 0xDD
     set(regs.l, 3); }
 
 void CPU::set_3_hlp() { // 0xDE
-    memory.write8(regs.hl, memory.read8(regs.hl) & ~(1 << 3)); }
+    uint8_t r = memory.read8(regs.hl);
+    memory.write8(regs.hl, set(r, 3)); }
 
 void CPU::set_3_a() { // 0xDF
     set(regs.a, 3); }
@@ -1966,7 +1987,8 @@ void CPU::set_4_l() { // 0xE5
     set(regs.l, 4); }
 
 void CPU::set_4_hlp() { // 0xE6
-    memory.write8(regs.hl, memory.read8(regs.hl) & ~(1 << 4)); }
+    uint8_t r = memory.read8(regs.hl);
+    memory.write8(regs.hl, set(r, 4)); }
 
 void CPU::set_4_a() { // 0xE7
     set(regs.a, 4); }
@@ -1990,7 +2012,8 @@ void CPU::set_5_l() { // 0xED
     set(regs.l, 5); }
 
 void CPU::set_5_hlp() { // 0xEE
-    memory.write8(regs.hl, memory.read8(regs.hl) & ~(1 << 5)); }
+    uint8_t r = memory.read8(regs.hl);
+    memory.write8(regs.hl, set(r, 5)); }
 
 void CPU::set_5_a() { // 0xEF
     set(regs.a, 5); }
@@ -2014,7 +2037,8 @@ void CPU::set_6_l() { // 0xF5
     set(regs.l, 6); }
 
 void CPU::set_6_hlp() { // 0xF6
-    memory.write8(regs.hl, memory.read8(regs.hl) & ~(1 << 6)); }
+    uint8_t r = memory.read8(regs.hl);
+    memory.write8(regs.hl, set(r, 6)); }
 
 void CPU::set_6_a() { // 0xF7
     set(regs.a, 6); }
@@ -2038,7 +2062,8 @@ void CPU::set_7_l() { // 0xFD
     set(regs.l, 7); }
 
 void CPU::set_7_hlp() { // 0xFE
-    memory.write8(regs.hl, memory.read8(regs.hl) & ~(1 << 7)); }
+    uint8_t r = memory.read8(regs.hl);
+    memory.write8(regs.hl, set(r, 7)); }
 
 void CPU::set_7_a() { // 0xFF
     set(regs.a, 7); }

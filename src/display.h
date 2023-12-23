@@ -27,7 +27,7 @@ public:
 
     void renderScreen();
     void showDebug();
-    void callback(bool& pausing, Memory& memory);
+    void callback();
 
 
     sf::RenderWindow window;

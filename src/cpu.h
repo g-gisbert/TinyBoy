@@ -61,13 +61,13 @@ public:
     uint8_t rrc(uint8_t& r);
     uint8_t rl(uint8_t& r);
     uint8_t rr(uint8_t& r);
-    void sla(uint8_t& r);
+    uint8_t sla(uint8_t& r);
     uint8_t sra(uint8_t& r);
-    void swap(uint8_t& r);
-    void srl(uint8_t& r);
+    uint8_t swap(uint8_t& r);
+    uint8_t srl(uint8_t& r);
     void bit(uint8_t r, int b);
     void res8(uint8_t& r, int b);
-    void set(uint8_t& r, int b);
+    uint8_t set(uint8_t& r, int b);
 
     // Instructions
     void nop(); // 0x00
@@ -187,7 +187,7 @@ public:
     void ld_hlp_e(); // 0x73
     void ld_hlp_h(); // 0x74
     void ld_hlp_l(); // 0x75
-    // 0x76
+    void halt(); // 0x76
     void ld_hlp_a(); // 0x77
     void ld_a_b(); // 0x78
     void ld_a_c(); // 0x79
@@ -286,6 +286,7 @@ public:
     void rst_10(); // 0xD7
     void ret_c(); // 0xD8
     void reti(); // 0xD9
+    void jp_c_nn(uint16_t nn); // 0xDA
     void call_c_nn(uint16_t nn); // 0xDC
     void sbc_n(uint8_t n); // 0xDE
     void rst_18(); // 0xDF
@@ -591,7 +592,7 @@ public:
             {.name="DEC C", .byteLength=1, .funcCallVoid=&CPU::dec_c, .cycles=4},// 0x0D
             {.name="LD C, 0x%02X", .byteLength=2, .funcCall8=&CPU::ld_c_n, .cycles=8},// 0x0E
             {.name="RRCA", .byteLength=1, .funcCallVoid=&CPU::rrca, .cycles=4},// 0x0F
-            {.name="???", .byteLength=0, .funcCallVoid=nullptr, .cycles=0},// 0x10
+            {.name="???", .byteLength=1, .funcCallVoid=&CPU::nop, .cycles=0},// 0x10
             {.name="LD DE, 0x%04X", .byteLength=3, .funcCall16=&CPU::ld_de_nn, .cycles=12},// 0x11
             {.name="LD (DE), A", .byteLength=1, .funcCallVoid=&CPU::ld_dep_a, .cycles=8},// 0x12
             {.name="INC DE", .byteLength=1, .funcCallVoid=&CPU::inc_de, .cycles=8},// 0x13
@@ -693,7 +694,7 @@ public:
             {.name="LD (HL), E", .byteLength=1, .funcCallVoid=&CPU::ld_hlp_e, .cycles=8},// 0x73
             {.name="LD (HL), H", .byteLength=1, .funcCallVoid=&CPU::ld_hlp_h, .cycles=8},// 0x74
             {.name="LD (HL), L", .byteLength=1, .funcCallVoid=&CPU::ld_hlp_l, .cycles=8},// 0x75
-            {.name="HALT", .byteLength=0, .funcCallVoid=&CPU::nop, .cycles=4},// 0x76
+            {.name="HALT", .byteLength=1, .funcCallVoid=&CPU::halt, .cycles=4},// 0x76
             {.name="LD (HL), A", .byteLength=1, .funcCallVoid=&CPU::ld_hlp_a, .cycles=8},// 0x77
             {.name="LD A, B", .byteLength=1, .funcCallVoid=&CPU::ld_a_b, .cycles=4},// 0x78
             {.name="LD A, C", .byteLength=1, .funcCallVoid=&CPU::ld_a_c, .cycles=4},// 0x79
@@ -793,7 +794,7 @@ public:
             {.name="RST 10", .byteLength=1, .funcCallVoid=&CPU::rst_10, .cycles=16},// 0xD7
             {.name="RET C", .byteLength=1, .funcCallVoid=&CPU::ret_c, .cycles=0},// 0xD8
             {.name="RETI", .byteLength=1, .funcCallVoid=&CPU::reti, .cycles=16},// 0xD9
-            {.name="???", .byteLength=0, .funcCallVoid=nullptr, .cycles=0},// 0xDA
+            {.name="JP C, 0x%04X", .byteLength=3, .funcCall16=&CPU::jp_c_nn, .cycles=0},// 0xDA
             {.name="???", .byteLength=0, .funcCallVoid=nullptr, .cycles=0},// 0xDB
             {.name="CALL C, 0x%04X", .byteLength=3, .funcCall16=&CPU::call_c_nn, .cycles=0},// 0xDC
             {.name="???", .byteLength=0, .funcCallVoid=nullptr, .cycles=0},// 0xDD
