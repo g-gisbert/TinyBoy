@@ -7,17 +7,22 @@ GameBoy::GameBoy() : renderer(memory), cpu(memory), ppu(memory, renderer), timer
 }
 
 void GameBoy::setupSequence() {
-    loadCartridge(std::string{"../roms/tetris.gb"});
+    loadCartridge(std::string{"../roms/zelda.gb"});
 }
 
 void GameBoy::loadCartridge(std::string filename) {
-    memory.cart.loadRom(filename);
-    memory.cart.printInfo();
+    memory.cart = loadRom(filename);
+    memory.cart->printInfo();
 }
 
 void GameBoy::run() {
+
+    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+    uint64_t totalTicks = 0;
     while(running) {
-        renderer.callback(pausing, memory);
+        //std::cout << "renderer b" << std::endl;
+        renderer.callback();
+        //std::cout << "renderer a" << std::endl;
         if (pausing) {
             std::ofstream MyFile("filename.txt");
             std::string visu = cpu.debugFile.str();
@@ -25,16 +30,24 @@ void GameBoy::run() {
             MyFile << visu;
             continue;
         }
+        //std::cout << "joypad b" << std::endl;
+        joypad.checkState();
+        //std::cout << "joypad a" << std::endl;
+        //std::cout << "interrupt b" << std::endl;
         interruptStep(cpu);
-        int& cycles = cpu.step();
-        ppu.step(cycles);
+        //std::cout << "interrupt a" << std::endl;
+        int cycles = cpu.step();
+        totalTicks += cycles;
 
-        //    blarggs test - serial output
-        if (memory.read8(0xff02) == 0x81) {
-            char c = memory.read8(0xff01);
-            printf("%c", c);
-            memory.write8(0xff02, 0x0);
-        }
+        //std::cout << "ppu b" << std::endl;
+        ppu.step(cycles);
+        //std::cout << "ppu a" << std::endl;
+        //std::cout << "timer b" << std::endl;
+        timer.step(cycles);
+        //std::cout << "timer a" << std::endl;
+
+        /*while (std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - start).count()
+                < totalTicks * 238.418579) {}*/
 
     }
     std::cout << "End" << std::endl;

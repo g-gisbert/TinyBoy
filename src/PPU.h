@@ -14,16 +14,21 @@ enum : uint8_t {
 
 class PPU {
 public:
-    PPU(Memory& memo, Display& dis) : memory(memo), display(dis) {}
-    void step(int& cycles);
+    PPU(Memory& memo, Display& dis) : memory(memo), display(dis), internalCycles(0) {}
+    void step(int cycles);
     void statHandle(int mb);
 
-    void renderDebug();
 
     Memory& memory;
     Display& display;
+    bool BGW1_3[160];
 
     int mode;
+    int internalCycles;
+
+private:
+    void printBackground(int LY);
+    void printSprites(uint8_t LY);
 };
 
 

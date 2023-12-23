@@ -1,6 +1,6 @@
 #include "cartridge.h"
 
-void Cartridge::loadRom(std::string& filename) {
+std::unique_ptr<Cartridge> loadRom(std::string& filename) {
     // Open file
     std::ifstream rom(filename, std::ios::binary);
     if(!rom.is_open()) {
@@ -13,28 +13,40 @@ void Cartridge::loadRom(std::string& filename) {
     rom.seekg(0, std::ios::beg);
 
     // Copy data
-    romData = new char[size];
+    char* romData = new char [size];
     rom.read(romData, size);
 
-    title = std::string(&romData[0x0134], &romData[0x0143]);
-    cartridgeType = romData[0x0147];
-    romSize = romData[0x0148];
-    ramSize = romData[0x0149];
+    CartridgeInfo info;
+    info.title = std::string(&romData[0x0134], &romData[0x0143]);
+    info.cartridgeType = romData[0x0147];
+    info.romSize = romData[0x0148];
+    info.ramSize = romData[0x0149];
+
+    switch (info.cartridgeType) {
+        case 0x00:
+            return std::make_unique<NoMBC>(romData, info);
+        case 0x01:
+        case 0x02:
+        case 0x03:
+            return std::make_unique<MBC1>(romData, info, info.getRamSize());
+        default:
+            std::cerr << "MBC type not implemented" << std::endl;
+    };
 
 }
 
 void Cartridge::printInfo() {
     std::cout << "### Cartridge info ###" << std::endl;
-    std::cout << "\tTitle : " << title << std::endl;
-    std::cout << "\tCartridge Type : " << std::hex << int(cartridgeType) << " (" << getCartridgeType(cartridgeType) << ")" << std::endl;
-    std::cout << "\tROM Size : " << std::hex << int(romSize) << " (" << getRomSize(romSize) << ")" << std::endl;
-    std::cout << "\tRAM Size : " << std::hex << int(ramSize) << " (" << getRamSize(ramSize) << ")" << std::endl;
+    std::cout << "\tTitle : " << info.title << std::endl;
+    std::cout << "\tCartridge Type : " << std::hex << int(info.cartridgeType) << " (" << info.getCartridgeType() << ")" << std::endl;
+    std::cout << "\tROM Size : " << std::hex << int(info.romSize) << " (" << info.getRomSize() << ")" << std::endl;
+    std::cout << "\tRAM Size : " << std::hex << int(info.ramSize) << " (0x" << info.getRamSize() << " B)" << std::endl;
 }
 
-std::string Cartridge::getCartridgeType(uint8_t x) {
+std::string CartridgeInfo::getCartridgeType() const {
     std::string ct = "???";
 
-    switch (x) {
+    switch (cartridgeType) {
         case 0x00:
             ct = "ROM ONLY";
             break;
@@ -124,10 +136,10 @@ std::string Cartridge::getCartridgeType(uint8_t x) {
     return ct;
 }
 
-std::string Cartridge::getRomSize(uint8_t x) {
+std::string CartridgeInfo::getRomSize() const {
     std::string rs = "???";
 
-    switch (x) {
+    switch (romSize) {
         case 0x00:
             rs = "32 KiB";
             break;
@@ -169,29 +181,87 @@ std::string Cartridge::getRomSize(uint8_t x) {
     return rs;
 }
 
-std::string Cartridge::getRamSize(uint8_t x) {
-    std::string rs = "???";
+int CartridgeInfo::getRamSize() const {
 
-    switch (x) {
+    switch (ramSize) {
         case 0x00:
-            rs = "0";
-            break;
+            return 0;
         case 0x02:
-            rs = "8 KiB";
-            break;
+            return 8192;
         case 0x03:
-            rs = "32 KiB";
-            break;
+            return 32768;
         case 0x04:
-            rs = "128 KiB";
-            break;
+            return 131072;
         case 0x05:
-            rs = "64 KiB";
-            break;
+            return 65536;
     }
-    return rs;
+    return 0;
 }
 
-uint8_t Cartridge::readCart(uint16_t pc) {
-    return romData[pc];
+uint8_t Cartridge::readCart(uint16_t address) {
+    return romData[address];
+}
+
+uint8_t MBC1::readCart(uint16_t address) {
+    /*if (address < 0x4000) {
+        return romData[address];
+    } else if (address < 0x8000) {
+        return romData[address - 0x4000 + 0x4000 * romBankNumber];
+    } else if (address >= 0xA000 && address < 0xC000) {
+        if (!ramEnabled)
+            return 0xFF;
+        return ramData[address - 0xA000 + 0x2000 * ramBankNumber];
+    }
+    return 0xFF;*/
+    if (address < 0x4000){
+        int bank = bankingMode * (ramBankNumber << 5) % 64;
+        return romData[bank * 0x4000 + address];
+    } else if (address < 0x8000){
+        int bank = ((ramBankNumber << 5) | romBankNumber) % 64;
+        return romData[bank * 0x4000 + address - 0x4000];
+    } else if(address >= 0xA000 && address < 0xC000) {
+        if (ramEnabled){
+            int bank = bankingMode * ramBankNumber % 4;
+            return ramData[bank * 0x2000 + address - 0xA000];
+        }
+    }
+    return 0xFF;
+}
+
+void v(int  a) {}
+
+void MBC1::writeCart(uint16_t address, uint8_t value) {
+
+    /*if (address < 0x2000) { // 0x0000–0x1FFF
+        ramEnabled = (value & 0x0F) == 0x0A;
+    } else if (address < 0x4000) { // 0x2000–0x3FFF
+        romBankNumber = value & 0x1F;
+        romBankNumber = romBankNumber ? romBankNumber : 0x01;
+    } else if (address < 0x6000) { // 0x4000–0x5FFF
+        ramBankNumber = value & 0x03;
+    } else if (address < 0x8000) { // 0x6000-0x7FFF
+        bankingMode = value & 0x01;
+    } else if (address >= 0xA000 && address < 0xC000) {
+        if (!ramEnabled)
+            return;
+        ramData[address - 0xA000 + 0x2000 * ramBankNumber] = value;
+    }*/
+    if (address < 0x2000){
+        ramEnabled = (value & 0x0F) == 0x0A;
+    } else if (address < 0x4000){
+        value &= 0x1F;
+        if(value == 0)
+            value = 1;
+        romBankNumber = value;
+    } else if (address < 0x6000){
+        ramBankNumber = value & 0x3;
+    } else if (address < 0x8000) {
+        bankingMode = value & 0x1;
+    } else if(address >= 0xA000 && address < 0xC000) {
+        if(ramEnabled){
+            int bank = (ramBankNumber * bankingMode) % 4;
+            ramData[bank * 0x2000 + address - 0xA000] = value;
+        }
+    }
+
 }

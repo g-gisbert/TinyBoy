@@ -8,6 +8,7 @@
 #include "timer.h"
 #include "joypad.h"
 #include <string>
+#include <chrono>
 
 
 class GameBoy {
@@ -29,6 +30,7 @@ public:
 
     bool running;
     bool pausing;
+    int prevCycles;
 };
 
 

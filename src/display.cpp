@@ -28,26 +28,15 @@ void Display::renderScreen() {
 
 
 
-void Display::callback(bool& pausing, Memory& memory) {
+void Display::callback() {
     sf::Event event;
     while (window.pollEvent(event))
     {
         if (event.type == sf::Event::Closed) {
             //window.close();
             //running = false;
-            pausing = !pausing;
+            //pausing = !pausing;
 
-            for (int i = 0; i < 32; ++i) {
-                for (int j = 0; j < 32; ++j) {
-                    std::cout << int(memory.read8(0x9800 + i*32 + j)) << " ";
-                }
-                std::cout << std::endl;
-            }
-
-            uint8_t val = memory.JOYP();
-            val |= 0b00010111;
-            memory.write8(0xFF00, val);
-            memory.IF() |= 0x10;
         }
     }
 
