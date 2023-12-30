@@ -17,8 +17,6 @@ public:
     PPU(Memory& memo, Display& dis) : memory(memo), display(dis), internalCycles(0) {}
     void step(int cycles);
     void changeMode(int m);
-    void statHandle(int mb);
-
 
     Memory& memory;
     Display& display;
