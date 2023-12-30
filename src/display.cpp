@@ -1,9 +1,7 @@
 #include "display.h"
 
-Display::Display(Memory& memo) : window(sf::VideoMode(160, 144), "Full GameBoy Emulation"),
-                                 debugWindow(sf::VideoMode(200, 100), "Debug"){
+Display::Display(Memory& memo) : window(sf::VideoMode(160, 144), "Full GameBoy Emulation") {
     window.setSize(sf::Vector2u(640, 576));
-    debugWindow.setSize(sf::Vector2u(800, 400));
 }
 
 void Display::renderScreen() {
@@ -28,27 +26,12 @@ void Display::renderScreen() {
 
 
 
-void Display::callback() {
+void Display::callback(bool& running) {
     sf::Event event;
-    while (window.pollEvent(event))
-    {
+    while (window.pollEvent(event)) {
         if (event.type == sf::Event::Closed) {
-            //window.close();
-            //running = false;
-            //pausing = !pausing;
-
+            running = false;
         }
     }
 
-}
-
-void Display::showDebug() {
-    debugWindow.clear();
-
-    image.create(160, 144, reinterpret_cast<uint8_t*>(screenBuffer));
-    texture.loadFromImage(image);
-    sprite.setTexture(texture);
-    window.draw(sprite);
-
-    debugWindow.display();
 }

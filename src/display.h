@@ -26,12 +26,10 @@ public:
     Display(Memory& memo);
 
     void renderScreen();
-    void showDebug();
-    void callback();
+    void callback(bool& running);
 
 
     sf::RenderWindow window;
-    sf::RenderWindow debugWindow;
     Pixel screenBuffer[160*144];
     Pixel debugBuffer[16*8*24*8];
     sf::Image image;
