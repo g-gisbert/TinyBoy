@@ -21,7 +21,7 @@ void GameBoy::run() {
     uint64_t totalTicks = 0;
     while(running) {
         //std::cout << "renderer b" << std::endl;
-        renderer.callback();
+        renderer.callback(running);
         //std::cout << "renderer a" << std::endl;
         if (pausing) {
             std::ofstream MyFile("filename.txt");
@@ -46,8 +46,8 @@ void GameBoy::run() {
         timer.step(cycles);
         //std::cout << "timer a" << std::endl;
 
-        /*while (std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - start).count()
-                < totalTicks * 238.418579) {}*/
+        while (std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - start).count()
+                < totalTicks * 238.418579) {}
 
     }
     std::cout << "End" << std::endl;

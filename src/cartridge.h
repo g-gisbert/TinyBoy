@@ -61,6 +61,23 @@ private:
 
 };
 
+class MBC3 : public Cartridge {
+public:
+    MBC3(char* rom, CartridgeInfo inf, int ramSize) : Cartridge(rom, std::move(inf)), ramData(new char[ramSize]) {
+        std::memset(ramData, 0, ramSize);
+    }
+
+    uint8_t readCart(uint16_t address) override;
+    void writeCart(uint16_t address, uint8_t value) override;
+private:
+    char* ramData;
+
+    bool ramEnabled = false;
+    uint8_t romBankNumber = 0x01;
+    uint8_t ramBankNumber = 0x00;
+    bool bankingMode = false;
+};
+
 std::unique_ptr<Cartridge> loadRom(std::string& filename);
 
 #endif //EMULATOR_CARTRIDGE_H

@@ -16,6 +16,7 @@ class PPU {
 public:
     PPU(Memory& memo, Display& dis) : memory(memo), display(dis), internalCycles(0) {}
     void step(int cycles);
+    void changeMode(int m);
     void statHandle(int mb);
 
 
@@ -27,8 +28,10 @@ public:
     int internalCycles;
 
 private:
+    void printScreen(int LY);
     void printBackground(int LY);
-    void printSprites(uint8_t LY);
+    void printWindow(int LY);
+    void printSprites(int LY);
 };
 
 

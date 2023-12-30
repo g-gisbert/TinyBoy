@@ -29,6 +29,10 @@ std::unique_ptr<Cartridge> loadRom(std::string& filename) {
         case 0x02:
         case 0x03:
             return std::make_unique<MBC1>(romData, info, info.getRamSize());
+        case 0x11:
+        case 0x12:
+        case 0x13:
+            return std::make_unique<MBC3>(romData, info, info.getRamSize());
         default:
             std::cerr << "MBC type not implemented" << std::endl;
     };
@@ -203,7 +207,7 @@ uint8_t Cartridge::readCart(uint16_t address) {
 }
 
 uint8_t MBC1::readCart(uint16_t address) {
-    /*if (address < 0x4000) {
+    if (address < 0x4000) {
         return romData[address];
     } else if (address < 0x8000) {
         return romData[address - 0x4000 + 0x4000 * romBankNumber];
@@ -212,19 +216,6 @@ uint8_t MBC1::readCart(uint16_t address) {
             return 0xFF;
         return ramData[address - 0xA000 + 0x2000 * ramBankNumber];
     }
-    return 0xFF;*/
-    if (address < 0x4000){
-        int bank = bankingMode * (ramBankNumber << 5) % 64;
-        return romData[bank * 0x4000 + address];
-    } else if (address < 0x8000){
-        int bank = ((ramBankNumber << 5) | romBankNumber) % 64;
-        return romData[bank * 0x4000 + address - 0x4000];
-    } else if(address >= 0xA000 && address < 0xC000) {
-        if (ramEnabled){
-            int bank = bankingMode * ramBankNumber % 4;
-            return ramData[bank * 0x2000 + address - 0xA000];
-        }
-    }
     return 0xFF;
 }
 
@@ -232,36 +223,44 @@ void v(int  a) {}
 
 void MBC1::writeCart(uint16_t address, uint8_t value) {
 
-    /*if (address < 0x2000) { // 0x0000–0x1FFF
+    if (address < 0x2000) { // 0x0000–0x1FFF
         ramEnabled = (value & 0x0F) == 0x0A;
     } else if (address < 0x4000) { // 0x2000–0x3FFF
         romBankNumber = value & 0x1F;
         romBankNumber = romBankNumber ? romBankNumber : 0x01;
     } else if (address < 0x6000) { // 0x4000–0x5FFF
         ramBankNumber = value & 0x03;
-    } else if (address < 0x8000) { // 0x6000-0x7FFF
-        bankingMode = value & 0x01;
     } else if (address >= 0xA000 && address < 0xC000) {
         if (!ramEnabled)
             return;
         ramData[address - 0xA000 + 0x2000 * ramBankNumber] = value;
-    }*/
-    if (address < 0x2000){
-        ramEnabled = (value & 0x0F) == 0x0A;
-    } else if (address < 0x4000){
-        value &= 0x1F;
-        if(value == 0)
-            value = 1;
-        romBankNumber = value;
-    } else if (address < 0x6000){
-        ramBankNumber = value & 0x3;
-    } else if (address < 0x8000) {
-        bankingMode = value & 0x1;
-    } else if(address >= 0xA000 && address < 0xC000) {
-        if(ramEnabled){
-            int bank = (ramBankNumber * bankingMode) % 4;
-            ramData[bank * 0x2000 + address - 0xA000] = value;
-        }
     }
+}
 
+uint8_t MBC3::readCart(uint16_t address) {
+    if (address < 0x4000) {
+        return romData[address];
+    } else if (address < 0x8000) {
+        return romData[address - 0x4000 + 0x4000 * romBankNumber];
+    } else if (address >= 0xA000 && address < 0xC000) {
+        if (!ramEnabled)
+            return 0xFF;
+        return ramData[address - 0xA000 + 0x2000 * ramBankNumber];
+    }
+    return 0xFF;
+}
+
+void MBC3::writeCart(uint16_t address, uint8_t value) {
+    if (address < 0x2000) // 0x0000–0x1FFF
+        ramEnabled = (value & 0x0F) == 0x0A;
+    else if (address < 0x4000){ // 0x2000–0x3FFF
+        romBankNumber = value & 0x7F;
+        romBankNumber = romBankNumber ? romBankNumber : 0x01;
+    } else if (address < 0x6000) // 0x4000–0x5FFF
+        ramBankNumber = value & 0x03;
+    else if(address >= 0xA000 && address < 0xC000) {
+        if (!ramEnabled)
+            return;
+        ramData[address - 0xA000 + 0x2000 * ramBankNumber] = value;
+    }
 }
