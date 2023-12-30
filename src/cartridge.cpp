@@ -219,7 +219,6 @@ uint8_t MBC1::readCart(uint16_t address) {
     return 0xFF;
 }
 
-void v(int  a) {}
 
 void MBC1::writeCart(uint16_t address, uint8_t value) {
 
