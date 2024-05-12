@@ -7,7 +7,7 @@ GameBoy::GameBoy() : renderer(memory), cpu(memory), ppu(memory, renderer), timer
 }
 
 void GameBoy::setupSequence() {
-    loadCartridge(std::string{"../roms/zelda.gb"});
+    loadCartridge(std::string{"../roms/pokemon.gb"});
 }
 
 void GameBoy::loadCartridge(std::string filename) {
