@@ -8,7 +8,7 @@ uint16_t Memory::read16(uint16_t address) {
 }
 
 uint8_t Memory::read8(uint16_t address) {
-    //std::cout <<  "readBug before" <<std::endl;
+
     uint8_t val = 0;
     if(address < 0x8000) { // ROM
         val = cart->readCart(address);
@@ -29,7 +29,7 @@ uint8_t Memory::read8(uint16_t address) {
     } else if (address == 0xFFFF) { // IME
         val = IE_;
     }
-    //std::cout <<  "readBug after" <<std::endl;
+
     return val;
 }
 
@@ -39,7 +39,6 @@ void Memory::write16(uint16_t address, uint16_t value) {
 }
 
 void Memory::write8(uint16_t address, uint8_t value) {
-    //std::cout <<  "writeBug before" <<std::endl;
 
     if(address < 0x8000) { // ROM
         cart->writeCart(address, value);
@@ -62,7 +61,6 @@ void Memory::write8(uint16_t address, uint8_t value) {
     } else if (address == 0xFFFF) { // IME
         IE_ = value;
     }
-    //std::cout <<  "writeBug after" <<std::endl;
 }
 
 void Memory::DMATransfer(uint16_t startAddress) {
@@ -71,9 +69,4 @@ void Memory::DMATransfer(uint16_t startAddress) {
         uint16_t addressDest = 0xFE00 + i;
         write8(addressDest, read8(addressSource));
     }
-    //std::cout << "DMA transferred : " << startAddress;
-}
-
-void Memory::debugState() {
-
 }

@@ -1,7 +1,6 @@
 #include "PPU.h"
 
 
-
 inline void PPU::changeMode(int m) {
     memory.STAT() &= 0xFC;
     memory.STAT() |= m;

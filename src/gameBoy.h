@@ -13,12 +13,12 @@
 
 class GameBoy {
 public:
-    GameBoy();
+    GameBoy(const std::string& filepath);
     void run();
 
 private:
-    void setupSequence();
-    void loadCartridge(std::string filename);
+    void setupSequence(const std::string& filepath);
+    void loadCartridge(const std::string& filename);
 
 public:
     Memory memory;

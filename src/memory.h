@@ -26,11 +26,8 @@ struct Memory {
     uint8_t HRAM[0x7F]; // 0xFF80 - 0xFFFE
     uint8_t IE_; // 0xFFFF
     bool IME;
-    uint8_t tmpDebug = 0x90;
-
 
     void DMATransfer(uint16_t startAddress);
-    void debugState();
 
     // fetch, read, write
     uint8_t read8(uint16_t address);

@@ -31,7 +31,6 @@ public:
 
     sf::RenderWindow window;
     Pixel screenBuffer[160*144];
-    Pixel debugBuffer[16*8*24*8];
     sf::Image image;
     sf::Texture texture;
     sf::Sprite sprite;

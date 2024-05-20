@@ -1,6 +1,5 @@
 #include "cpu.h"
 #include <iomanip>
-#include <algorithm>
 
 CPU::CPU(Memory& memo) : memory(memo) {
     initMemory();
@@ -25,88 +24,30 @@ int& CPU::step() {
 
     cycles = 0;
 
-   /*if (nInstr % 1000 == 0) {
-        std::cout << std::dec << nInstr << std::hex << std::endl;
-        std::string visu = debugFile.str();
-        std::transform(visu.begin(), visu.end(), visu.begin(), ::toupper);
-        debugFile.str(std::string());
-        MyFile << visu;
-    }
-
-    debugFile << "A:" << std::setfill('0') << std::setw(2) << std::hex<< int(regs.a) <<
-              " F:" << std::setfill('0') << std::setw(2) << std::hex << int(regs.f) <<
-              " B:" << std::setfill('0') << std::setw(2) << std::hex << int(regs.b) <<
-              " C:" << std::setfill('0') << std::setw(2) << std::hex << int(regs.c) <<
-              " D:" << std::setfill('0') << std::setw(2) << std::hex << int(regs.d) <<
-              " E:" << std::setfill('0') << std::setw(2) << std::hex << int(regs.e) <<
-              " H:" << std::setfill('0') << std::setw(2) << std::hex << int(regs.h) <<
-              " L:" << std::setfill('0') << std::setw(2) << std::hex << int(regs.l) <<
-              " SP:" << std::setfill('0') << std::setw(4) << std::hex << int(regs.sp) <<
-              " PC:" << std::setfill('0') << std::setw(4) << std::hex << int(regs.pc) <<
-              " PCMEM:" << std::setfill('0') << std::setw(2) << std::hex << int(memory.read8(regs.pc)) <<
-              "," << std::setfill('0') << std::setw(2) << std::hex << int(memory.read8(regs.pc+1)) <<
-              "," << std::setfill('0') << std::setw(2) << std::hex << int(memory.read8(regs.pc+2)) <<
-              "," << std::setfill('0') << std::setw(2) << std::hex << int(memory.read8(regs.pc+3)) << "\n";
-
-    std::string visu = debugFile.str();*/
-
     uint8_t opcode = memory.read8(regs.pc++);
-
     Instruction instruction = instructions_set[opcode];
-
-    //std::printf("Debug : 0x%02X | ", opcode);
-
-    //memory.IORegisters[0x44] = 0x90;  // to delete
 
     switch(instruction.byteLength) {
         case 1: {
-            //std::printf("INSTRUCTION : %s (0x%02X)\n", instruction.name, opcode);
             (*this.*instruction.funcCallVoid)();
             break;
         }
         case 2: {
             uint16_t operand = memory.read8(regs.pc);
             regs.pc++;
-            //std::printf("INSTRUCTION : ");
-            //std::printf(instruction.name, operand);
-            //std::printf(" (0x%02X)\n", opcode);
             (*this.*instruction.funcCall8)(operand);
             break;
         }
         case 3: {
             uint16_t operand = memory.read16(regs.pc);
             regs.pc += 2;
-            //std::printf("INSTRUCTION : ");
-            //std::printf(instruction.name, operand);
-            //std::printf(" (0x%02X)\n", opcode);
             (*this.*instruction.funcCall16)(operand);
             break;
         }
         default: {
             std::printf("Instruction not implemented yet! PC : %x, OPCODE : %x\n", regs.pc-1, opcode);
             showState();
-            int a;
-            std::cin >> a;
         }
-    }
-
-    //memory.IORegisters[0x44] = 0x90;  // to delete
-
-    nInstr++;
-    if (nInstr == -5)
-        debug = true;
-
-    if (regs.pc == 0x9999)
-        debug = false;
-
-    if (debug) {
-        std::printf("INSTRUCTION : %s (0x%02X)\n", instruction.name, opcode);
-        showState();
-        int a;
-        //std::cin >> a;
-        std::cout << "nInstr : " << std::dec << nInstr << std::hex << std::endl;
-        //nInstr = 0;
-        //debug = false;
     }
 
     cycles += instruction.cycles;
@@ -126,20 +67,11 @@ void CPU::showState() const {
 
 // Helpers
 void CPU::pushToStack(uint16_t nn) {
-    /*uint8_t msb = (nn & 0xFF00) >> 8;
-    uint8_t lsb = uint8_t(nn & 0x00FF);
-    stack[regs.sp-1] = msb;
-    stack[regs.sp-2] = lsb;
-    regs.sp -= 2;*/
     regs.sp -= 2;
     memory.write16(regs.sp, nn);
 }
 
 uint16_t CPU::popFromStack() {
-    /*uint8_t lsb = stack[regs.sp];
-    uint8_t msb = stack[regs.sp+1];
-    regs.sp += 2;
-    return (uint16_t(msb) << 8) + lsb;*/
     uint16_t value = memory.read16(regs.sp);
     regs.sp += 2;
     return value;
@@ -399,21 +331,6 @@ void CPU::ld_h_n(uint8_t n) { // 0x26
 
 // Solution from : https://forums.nesdev.org/viewtopic.php?t=15944
 void CPU::daa() { // 0x27
-    /*regs.setFlag(ZERO_FLAG | HALF_CARRY_FLAG, 0);
-    if (regs.checkFlagSet(SUB_FLAG)) {
-        if (regs.checkFlagSet(CARRY_FLAG))
-            regs.a -= 0x60;
-        if (regs.checkFlagSet(HALF_CARRY_FLAG))
-            regs.a -= 0x06;
-    }
-    else {
-        if (regs.checkFlagSet(CARRY_FLAG) || regs.a > 0x99) {
-            regs.a += 0x60; regs.setFlag(CARRY_FLAG, 1); }
-        if (regs.checkFlagSet(HALF_CARRY_FLAG) || (regs.a & 0x0F) > 0x09)
-            regs.a += 0x06;
-    }
-    if (regs.a == 0)
-        regs.setFlag(ZERO_FLAG, 1);*/
     uint16_t s = regs.a;
 
     if(regs.checkFlagSet(SUB_FLAG)) {
@@ -1100,13 +1017,6 @@ void CPU::add_sp_n(uint8_t n) { // 0xE8
         regs.setFlag(HALF_CARRY_FLAG, 1);
 
     regs.sp = uint16_t(sum);
-    /*
-    uint32_t sum = regs.hl + rr;
-    if (sum > 0x0000FFFF)
-        regs.setFlag(CARRY_FLAG, 1);
-    if ((regs.hl & 0x0FFF) + (rr & 0x0FFF) > 0x0FFF)
-        regs.setFlag(HALF_CARRY_FLAG, 1);
-    regs.hl += rr;*/
     }
 
 void CPU::jp_hlp() { // 0xE9
@@ -1155,14 +1065,6 @@ void CPU::ld_hl_spn(uint8_t n) { // 0xF8
         regs.setFlag(HALF_CARRY_FLAG, 1);
 
     regs.hl = sum & 0x0000FFFF;
-    /*uint16_t result = regs.sp + int8_t(n);
-
-    regs.setFlag(CARRY_FLAG, ((regs.sp ^ int8_t(n) ^ result) & 0x100) == 0x100);
-    regs.setFlag(HALF_CARRY_FLAG, ((regs.sp ^ int8_t(n) ^ result) & 0x10) == 0x10);
-
-    regs.hl = result;
-
-    regs.setFlag(SUB_FLAG | ZERO_FLAG, false);*/
 }
 
 void CPU::ld_sp_hl() { // 0xF9

@@ -2,10 +2,12 @@
 #include "gameBoy.h"
 
 
-int main()
+int main(int argc, char** argv)
 {
-    GameBoy emulation;
+    std::string filepath1 = std::string{argv[1]};
+    GameBoy emulation(filepath1.c_str());
     emulation.run();
 
     return 0;
 }
+

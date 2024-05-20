@@ -57,8 +57,6 @@ private:
     bool ramEnabled = false;
     uint8_t romBankNumber = 0x01;
     uint8_t ramBankNumber = 0x00;
-    bool bankingMode = false;
-
 };
 
 class MBC3 : public Cartridge {
@@ -75,9 +73,8 @@ private:
     bool ramEnabled = false;
     uint8_t romBankNumber = 0x01;
     uint8_t ramBankNumber = 0x00;
-    bool bankingMode = false;
 };
 
-std::unique_ptr<Cartridge> loadRom(std::string& filename);
+std::unique_ptr<Cartridge> loadRom(const std::string& filename);
 
 #endif //EMULATOR_CARTRIDGE_H

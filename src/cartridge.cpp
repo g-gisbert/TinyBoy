@@ -1,6 +1,6 @@
 #include "cartridge.h"
 
-std::unique_ptr<Cartridge> loadRom(std::string& filename) {
+std::unique_ptr<Cartridge> loadRom(const std::string& filename) {
     // Open file
     std::ifstream rom(filename, std::ios::binary);
     if(!rom.is_open()) {
@@ -36,7 +36,7 @@ std::unique_ptr<Cartridge> loadRom(std::string& filename) {
         default:
             std::cerr << "MBC type not implemented" << std::endl;
     };
-
+    return nullptr;
 }
 
 void Cartridge::printInfo() {
